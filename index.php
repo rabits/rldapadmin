@@ -68,7 +68,7 @@ function forbidden() {
 }
 
 // Request LDAP reader/writer user
-if( empty($_SERVER['PHP_AUTH_USER']) ) {
+if( isset($_GET['logout']) || empty($_SERVER['PHP_AUTH_USER']) ) {
     Header('WWW-Authenticate: Basic realm="LDAP Credentials"');
     Header('HTTP/1.0 401 Unauthorized');
     die();
@@ -97,7 +97,7 @@ if( ! ldap_exist($ldapconn, $ldap_domain, "ou=Users") ) {
         'ou' => 'Users',
         'objectClass' => 'organizationalUnit',
     ));
-    print('<p>Creation Users unit: '.ldap_error($ldapconn)."</p>\n");
+    print('<p>Creation Users unit: '.htmlspecialchars(ldap_error($ldapconn))."</p>\n");
 }
 ?>
 <!DOCTYPE html>
@@ -114,10 +114,10 @@ if( ! ldap_exist($ldapconn, $ldap_domain, "ou=Users") ) {
 <?php
 // Add/modify/delete user
 if( isset($_POST['login']) ) {
-    $data['cn'] = htmlspecialchars($_POST['login']);
-    $data['userPassword'] = htmlspecialchars($_POST['password']);
-    $data['givenName'] = htmlspecialchars($_POST['givenname']);
-    $data['sn'] = htmlspecialchars($_POST['surname']);
+    $data['cn'] = $_POST['login'];
+    $data['userPassword'] = $_POST['password'];
+    $data['givenName'] = $_POST['givenname'];
+    $data['sn'] = $_POST['surname'];
     $data['objectClass'] = 'inetOrgPerson';
 
     if( !empty($data['userPassword'].$data['givenName'].$data['sn']) ) {
@@ -135,7 +135,7 @@ if( isset($_POST['login']) ) {
         ldap_delete($ldapconn, 'cn='.ldap_escape($data['cn'], true).','.$ldap_userbase);
         print('<p>Removing user ');
     }
-    print($data['cn'].': '.ldap_error($ldapconn)."</p>\n");
+    print(htmlspecialchars($data['cn']).': '.htmlspecialchars(ldap_error($ldapconn))."</p>\n");
 }
 ?>
             <form action="/" method="post">
@@ -155,9 +155,9 @@ if( isset($_POST['login']) ) {
 $list = ldap_get_entries($ldapconn, ldap_search($ldapconn, $ldap_userbase, "cn=*", array("cn", "givenname", "sn")));
 for( $i = 0; $i < $list['count']; $i++ ) {
     // Print users
-    print('<tr><td>'.$list[$i]['cn'][0].'</td><td>'.$list[$i]['givenname'][0].' '.$list[$i]['sn'][0]."</td></tr>\n");
+    print('<tr><td>'.htmlspecialchars($list[$i]['cn'][0]).'</td><td>'.htmlspecialchars($list[$i]['givenname'][0]).' '.htmlspecialchars($list[$i]['sn'][0])."</td></tr>\n");
 }
-print("</table><p>Request operation: ".ldap_error($ldapconn)."</p>\n");
+print("</table><p>Request operation: ".htmlspecialchars(ldap_error($ldapconn))."</p>\n");
 
 // Close ldap connection
 ldap_close($ldapconn);
